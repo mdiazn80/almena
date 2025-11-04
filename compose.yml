@@ -23,7 +23,7 @@ services:
     container_name: autoconf-server
     hostname: autoconf-server
     profiles:
-      - init
+      - bootstrap
     volumes:
       - ./ipfs/nginx/config/autoconf.json:/usr/share/nginx/html/autoconf.json:ro
     ports:
@@ -37,21 +37,19 @@ services:
       retries: 10
       start_period: 10s
 
-  ipfs-node0:
+  ipfs-bootstrap:
     image: ipfs/kubo:latest
-    container_name: ipfs-node0
-    hostname: ipfs-node0
+    container_name: ipfs-bootstrap
+    hostname: ipfs-bootstrap
     profiles:
-      - init
-    environment:
-      - IPFS_PROFILE=server
+      - bootstrap
     volumes:
       - type: bind
         source: ./ipfs/secrets/swarm.key
         target: /data/ipfs/swarm.key
         read_only: true
       - type: bind
-        source: ./ipfs/scripts/main
+        source: ./ipfs/scripts/bootstrap
         target: /container-init.d/
     networks:
       - almena-network
@@ -71,7 +69,6 @@ services:
       - "4001:4001"
       - "5001:5001"
     environment:
-      - IPFS_PROFILE=server
       - IPFS_WEBUI_PORT=5001
       - IPFS_WEBUI_VERSION=4.9.1
     volumes:
@@ -103,12 +100,12 @@ services:
     hostname: ipfs-node2
     profiles:
       - local
+      - local2
     ports:
       - "8181:8080"
       - "4101:4001"
       - "5101:5001"
     environment:
-      - IPFS_PROFILE=server
       - IPFS_WEBUI_PORT=5101
       - IPFS_WEBUI_VERSION=4.9.1
     command: daemon --migrate=true --agent-version-suffix=docker
@@ -165,6 +162,7 @@ services:
     hostname: ipfs-cluster2
     profiles:
       - local
+      - local2
     ports:
       - "9194:9094"
       - "9195:9095"

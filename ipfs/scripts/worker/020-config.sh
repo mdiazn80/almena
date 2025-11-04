@@ -9,3 +9,4 @@ ipfs config --json Routing.Type '"dht"'
 ipfs config --json Swarm.DisableNatPortMap true
 ipfs config --json Swarm.Transports.Network.Websocket false
 ipfs config --json Gateway.NoFetch true
+ipfs bootstrap rm --all
