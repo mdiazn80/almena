@@ -1,0 +1,10 @@
+{
+  "AutoConf": {
+    "URL": "https://autoconf-server/autoconf.json",
+    "Enabled": true,
+    "RefreshInterval": "24h"
+  },
+  "AutoConfVersion": 2025072801,
+  "AutoConfSchema": 1,
+  "Bootstrap": []
+}
