@@ -22,6 +22,8 @@ services:
     image: nginx:alpine
     container_name: autoconf-server
     hostname: autoconf-server
+    profiles:
+      - init
     volumes:
       - ./ipfs/nginx/config/autoconf.json:/usr/share/nginx/html/autoconf.json:ro
     ports:
@@ -35,10 +37,35 @@ services:
       retries: 10
       start_period: 10s
 
+  ipfs-node0:
+    image: ipfs/kubo:latest
+    container_name: ipfs-node0
+    hostname: ipfs-node0
+    profiles:
+      - init
+    environment:
+      - IPFS_PROFILE=server
+    volumes:
+      - type: bind
+        source: ./ipfs/secrets/swarm.key
+        target: /data/ipfs/swarm.key
+        read_only: true
+      - type: bind
+        source: ./ipfs/scripts/main
+        target: /container-init.d/
+    networks:
+      - almena-network
+    depends_on:
+      autoconf-server:
+        condition: service_healthy
+
   ipfs-node1:
     image: ipfs/kubo:latest
     container_name: ipfs-node1
     hostname: ipfs-node1
+    profiles:
+      - local
+      - local1
     ports:
       - "8081:8080"
       - "4001:4001"
@@ -59,13 +86,10 @@ services:
         target: /data/ipfs/swarm.key
         read_only: true
       - type: bind
-        source: ./ipfs/scripts
+        source: ./ipfs/scripts/worker
         target: /container-init.d/
     networks:
       - almena-network
-    depends_on:
-      autoconf-server:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "ipfs", "id"]
       interval: 5s
@@ -77,6 +101,8 @@ services:
     image: ipfs/kubo:latest
     container_name: ipfs-node2
     hostname: ipfs-node2
+    profiles:
+      - local
     ports:
       - "8181:8080"
       - "4101:4001"
@@ -85,6 +111,7 @@ services:
       - IPFS_PROFILE=server
       - IPFS_WEBUI_PORT=5101
       - IPFS_WEBUI_VERSION=4.9.1
+    command: daemon --migrate=true --agent-version-suffix=docker
     volumes:
       - type: volume
         source: ipfs-node2-data
@@ -97,13 +124,10 @@ services:
         target: /data/ipfs/swarm.key
         read_only: true
       - type: bind
-        source: ./ipfs/scripts
+        source: ./ipfs/scripts/worker
         target: /container-init.d/
     networks:
       - almena-network
-    depends_on:
-      autoconf-server:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "ipfs", "id"]
       interval: 5s
@@ -115,12 +139,15 @@ services:
     image: ipfs/ipfs-cluster:latest
     container_name: ipfs-cluster1
     hostname: ipfs-cluster1
+    profiles:
+      - local
+      - local1
     ports:
       - "9094:9094"
       - "9095:9095"
     environment:
       CLUSTER_PEERNAME: cluster1
-      CLUSTER_SECRET: b7d8943d0e27e55abab4afd1fc94bde76d0ec47d566617732761cf2f4a5174fb # From shell variable if set
+      CLUSTER_SECRET: ${CLUSTER_SECRET} # From shell variable if set
       CLUSTER_IPFSHTTP_NODEMULTIADDRESS: /dns4/ipfs-node1/tcp/5001
     volumes:
       - type: volume
@@ -136,12 +163,14 @@ services:
     image: ipfs/ipfs-cluster:latest
     container_name: ipfs-cluster2
     hostname: ipfs-cluster2
+    profiles:
+      - local
     ports:
       - "9194:9094"
       - "9195:9095"
     environment:
       CLUSTER_PEERNAME: cluster2
-      CLUSTER_SECRET: b7d8943d0e27e55abab4afd1fc94bde76d0ec47d566617732761cf2f4a5174fb # From shell variable if set
+      CLUSTER_SECRET: ${CLUSTER_SECRET} # From shell variable if set
       CLUSTER_IPFSHTTP_NODEMULTIADDRESS: /dns4/ipfs-node2/tcp/5001
     volumes:
       - type: volume
