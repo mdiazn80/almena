@@ -17,6 +17,10 @@ volumes:
     driver: local
   ipfs-cluster2-data:
     driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
 
 services:
 
@@ -197,8 +201,30 @@ services:
     ports:
       - "9090:9090"
     volumes:
+      - type: volume
+        source: prometheus-data
+        target: /prometheus
       - type: bind
         source: ./grafana/prometheus.yml
         target: /etc/prometheus/prometheus.yml
+    networks:
+      - almena-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    hostname: grafana
+    profiles:
+      - monitor
+    restart: unless-stopped
+    volumes:
+      - type: volume
+        source: grafana-data
+        target: /var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - "3000:3000"
     networks:
       - almena-network
