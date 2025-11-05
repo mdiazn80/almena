@@ -7,6 +7,7 @@
   "AutoConfVersion": 2025072801,
   "AutoConfSchema": 1,
   "Bootstrap": [
+    "/dns4/ipfs-bootstrap/tcp/4001/p2p/12D3KooWJ25VEPJDNv3Dnifkyxia8Lvd3ZJWVfD1W66bT1Eg58tc"
   ],
   "Peering": {
     "Peers": []

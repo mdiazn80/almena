@@ -1,0 +1,16 @@
+global:
+  scrape_interval: 10s
+
+scrape_configs:
+  - job_name: "ipfs-cluster"
+    static_configs:
+      - targets: 
+          - ipfs-cluster1:8888
+          - ipfs-cluster2:8888
+
+  - job_name: "ipfs-nodes"
+    metrics_path: /debug/metrics/prometheus
+    static_configs:
+      - targets:
+          - ipfs-node1:5001
+          - ipfs-node2:5001

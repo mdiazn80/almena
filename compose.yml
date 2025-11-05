@@ -3,6 +3,8 @@ networks:
     driver: bridge
 
 volumes:
+  ipfs-bootstrap-data:
+    driver: local
   ipfs-node1-data:
     driver: local
   ipfs-node1-export:
@@ -44,6 +46,9 @@ services:
     profiles:
       - bootstrap
     volumes:
+      - type: volume
+        source: ipfs-bootstrap-data
+        target: /data/ipfs
       - type: bind
         source: ./ipfs/secrets/swarm.key
         target: /data/ipfs/swarm.key
@@ -62,8 +67,8 @@ services:
     container_name: ipfs-node1
     hostname: ipfs-node1
     profiles:
-      - local
-      - local1
+      - nodo1
+      - nodo
     ports:
       - "8081:8080"
       - "4001:4001"
@@ -99,8 +104,8 @@ services:
     container_name: ipfs-node2
     hostname: ipfs-node2
     profiles:
-      - local
-      - local2
+      - nodo2
+      - nodo
     ports:
       - "8181:8080"
       - "4101:4001"
@@ -137,45 +142,63 @@ services:
     container_name: ipfs-cluster1
     hostname: ipfs-cluster1
     profiles:
-      - local
-      - local1
+      - cluster1
+      - cluster
     ports:
+      - "8888:8888"
       - "9094:9094"
       - "9095:9095"
     environment:
       CLUSTER_PEERNAME: cluster1
       CLUSTER_SECRET: ${CLUSTER_SECRET} # From shell variable if set
       CLUSTER_IPFSHTTP_NODEMULTIADDRESS: /dns4/ipfs-node1/tcp/5001
+      CLUSTER_METRICS_ENABLESTATS: true
+      CLUSTER_METRICS_PROMETHEUSENDPOINT: /ip4/0.0.0.0/tcp/8888
+      CLUSTER_TRACING_ENABLETRACING: false
     volumes:
       - type: volume
         source: ipfs-cluster1-data
         target: /data/ipfs-cluster
     networks:
       - almena-network
-    depends_on:
-      ipfs-node1:
-        condition: service_healthy
 
   ipfs-cluster2:
     image: ipfs/ipfs-cluster:latest
     container_name: ipfs-cluster2
     hostname: ipfs-cluster2
     profiles:
-      - local
-      - local2
+      - cluster2
+      - cluster
     ports:
+      - "8988:8888"
       - "9194:9094"
       - "9195:9095"
     environment:
       CLUSTER_PEERNAME: cluster2
       CLUSTER_SECRET: ${CLUSTER_SECRET} # From shell variable if set
       CLUSTER_IPFSHTTP_NODEMULTIADDRESS: /dns4/ipfs-node2/tcp/5001
+      CLUSTER_METRICS_ENABLESTATS: true
+      CLUSTER_METRICS_PROMETHEUSENDPOINT: /ip4/0.0.0.0/tcp/8888
+      CLUSTER_TRACING_ENABLETRACING: false
     volumes:
       - type: volume
         source: ipfs-cluster2-data
         target: /data/ipfs-cluster
     networks:
       - almena-network
-    depends_on:
-      ipfs-node2:
-        condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    hostname: prometheus
+    profiles:
+      - monitor
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - type: bind
+        source: ./grafana/prometheus.yml
+        target: /etc/prometheus/prometheus.yml
+    networks:
+      - almena-network
