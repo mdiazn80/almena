@@ -17,6 +17,10 @@ volumes:
     driver: local
   ipfs-cluster2-data:
     driver: local
+  geth-bootnode-root:
+    driver: local
+  geth-bootnode-data:
+    driver: local
   prometheus-data:
     driver: local
   grafana-data:
@@ -188,6 +192,29 @@ services:
       - type: volume
         source: ipfs-cluster2-data
         target: /data/ipfs-cluster
+    networks:
+      - almena-network
+
+  geth-bootnode:
+    image: ethereum/client-go:stable
+    container_name: geth-bootnode
+    hostname: geth-bootnode
+    profiles:
+      - bootstrap2
+    ports:
+      - "30301:30301/udp"
+    entrypoint: >
+      geth init /genesis.json
+    volumes:
+      - type: bind
+        source: ./geth/genesis.json
+        target: /genesis.json
+      - type: volume
+        source: geth-bootnode-root
+        target: /root
+      - type: volume
+        source: geth-bootnode-data
+        target: /data
     networks:
       - almena-network
 
