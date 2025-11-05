@@ -3,3 +3,5 @@
 127.0.0.1   autoconf-server
 127.0.0.1   ipfs-cluster1
 127.0.0.1   ipfs-cluster2
+127.0.0.1   prometheus
+127.0.0.1   grafana

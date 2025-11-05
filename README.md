@@ -43,10 +43,15 @@ Plataforma experimental para gestionar identificadores descentralizados apoyánd
    docker compose --profile nodo up -d
    ```
 
+   ```bash
+   docker exec -it ipfs-node1 ipfs bootstrap add /dns4/ipfs-bootstrap/tcp/4001/<NUEVO_PEER_ID>
+   docker exec -it ipfs-node2 ipfs bootstrap add /dns4/ipfs-bootstrap/tcp/4001/<NUEVO_PEER_ID>
+   ```
+
 5. **Despliega el clúster IPFS (opcional)**  
    Define `CLUSTER_SECRET` para asegurar la comunicación entre peers y ejecuta:
    ```bash
-   CLUSTER_SECRET=<token> docker compose --profile cluster up -d
+   docker compose --profile cluster up -d
    ```
 
 6. **Activa la monitorización (opcional)**  
