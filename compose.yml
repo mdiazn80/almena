@@ -203,18 +203,20 @@ services:
       - bootstrap2
     ports:
       - "30301:30301/udp"
-    entrypoint: >
-      geth init /genesis.json
+    environment:
+      GETH_NODEKEY: /root/nodekey
+      GETH_NODISCOVER: true
+      GETH_IPCDISABLE: true
     volumes:
+      # - type: bind
+      #   source: ./geth/genesis.json
+      #   target: /genesis.json
       - type: bind
-        source: ./geth/genesis.json
-        target: /genesis.json
+        source: ./geth/nodekey
+        target: /root/nodekey
       - type: volume
         source: geth-bootnode-root
-        target: /root
-      - type: volume
-        source: geth-bootnode-data
-        target: /data
+        target: /root/.ethereum
     networks:
       - almena-network
 
