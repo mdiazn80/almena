@@ -17,9 +17,13 @@ volumes:
     driver: local
   ipfs-cluster2-data:
     driver: local
-  geth-bootnode-root:
+  geth-full1-data:
     driver: local
-  geth-bootnode-data:
+  geth-full2-data:
+    driver: local
+  prysm-beacon1-data:
+    driver: local
+  prysm-beacon2-data:
     driver: local
   prometheus-data:
     driver: local
@@ -195,28 +199,175 @@ services:
     networks:
       - almena-network
 
-  geth-bootnode:
+  geth-full1:
     image: ethereum/client-go:stable
-    container_name: geth-bootnode
-    hostname: geth-bootnode
+    container_name: geth-full1
+    hostname: geth-full1
     profiles:
-      - bootstrap2
+      - full
+      - full1
     ports:
-      - "30301:30301/udp"
+      - "8545:8545"
+      - "8551:8551"
+      - "30303:30303/udp"
+    entrypoint: ["/entrypoint.sh"]
     environment:
-      GETH_NODEKEY: /root/nodekey
+      GETH_VERBOSITY: 3
+      GETH_NODEKEY: /data/nodekey
       GETH_NODISCOVER: true
-      GETH_IPCDISABLE: true
+      GETH_SYNCMODE: full
+      GETH_NAT: none
+      GETH_PORT: 30303
+      GETH_MAXPEERS: 50
+      GETH_HTTP: true
+      GETH_HTTP_ADDR: 0.0.0.0
+      GETH_HTTP_VHOSTS: '*'
+      GETH_HTTP_API: eth,net,web3,engine
+      GETH_AUTHRPC_ADDR: 0.0.0.0
+      GETH_AUTHRPC_PORT: 8551
+      GETH_AUTHRPC_VHOSTS: '*'
+      GETH_AUTHRPC_JWTSECRET: /data/jwtsecret
+      GETH_NETWORKID: 12345
+      GETH_DATADIR: /data
     volumes:
-      # - type: bind
-      #   source: ./geth/genesis.json
-      #   target: /genesis.json
+      - type: bind
+        source: ./geth/genesis.json
+        target: /data/genesis.json
+      - type: bind
+        source: ./geth/entrypoint.sh
+        target: /entrypoint.sh
       - type: bind
         source: ./geth/nodekey
-        target: /root/nodekey
+        target: /data/nodekey
+      - type: bind
+        source: ./geth/jwtsecret
+        target: /data/jwtsecret
       - type: volume
-        source: geth-bootnode-root
-        target: /root/.ethereum
+        source: geth-full1-data
+        target: /data
+    networks:
+      - almena-network
+
+  geth-full2:
+    image: ethereum/client-go:stable
+    container_name: geth-full2
+    hostname: geth-full2
+    profiles:
+      - full
+      - full2
+    ports:
+      - "8645:8545"
+      - "8651:8551"
+      - "31303:30303/udp"
+    entrypoint: ["/entrypoint.sh"]
+    environment:
+      GETH_VERBOSITY: 3
+      GETH_NODEKEY: /data/nodekey
+      GETH_NODISCOVER: true
+      GETH_SYNCMODE: full
+      GETH_NAT: none
+      GETH_PORT: 30303
+      GETH_MAXPEERS: 50
+      GETH_HTTP: true
+      GETH_HTTP_ADDR: 0.0.0.0
+      GETH_HTTP_VHOSTS: '*'
+      GETH_HTTP_API: eth,net,web3,engine
+      GETH_AUTHRPC_ADDR: 0.0.0.0
+      GETH_AUTHRPC_PORT: 8551
+      GETH_AUTHRPC_VHOSTS: '*'
+      GETH_AUTHRPC_JWTSECRET: /data/jwtsecret
+      GETH_NETWORKID: 12345
+      GETH_DATADIR: /data
+    volumes:
+      - type: bind
+        source: ./geth/genesis.json
+        target: /data/genesis.json
+      - type: bind
+        source: ./geth/entrypoint.sh
+        target: /entrypoint.sh
+      - type: bind
+        source: ./geth/nodekey
+        target: /data/nodekey
+      - type: bind
+        source: ./geth/jwtsecret
+        target: /data/jwtsecret
+      - type: volume
+        source: geth-full2-data
+        target: /data
+    networks:
+      - almena-network
+
+  beacon1:
+    image: gcr.io/offchainlabs/prysm/beacon-chain:stable
+    container_name: beacon1
+    hostname: beacon1
+    profiles:
+      - beacon1
+      - prysm
+    command: >
+      --datadir=/data
+      --execution-endpoint=http://ipfs-node1:8551
+      --monitoring-host=0.0.0.0
+      --accept-terms-of-use
+      --http-host=0.0.0.0
+      --jwt-secret=/jwt.hex
+      --rpc-host=0.0.0.0
+    ports:
+      - "4000:4000"
+    volumes:
+      - type: bind
+        source: ./prysm/jwt.hex
+        target: /jwt.hex
+      - type: volume
+        source: prysm-beacon1-data
+        target: /data
+    networks:
+      - almena-network
+
+  beacon2:
+    image: gcr.io/offchainlabs/prysm/beacon-chain:stable
+    container_name: beacon2
+    hostname: beacon2
+    profiles:
+      - beacon2
+      - prysm
+    command: >
+      --datadir=/data
+      --execution-endpoint=http://ipfs-node2:8551
+      --monitoring-host=0.0.0.0
+      --accept-terms-of-use
+      --http-host=0.0.0.0
+      --jwt-secret=/jwt.hex
+      --rpc-host=0.0.0.0
+    ports:
+      - "4000:4000"
+    volumes:
+      - type: bind
+        source: ./prysm/jwt.hex
+        target: /jwt.hex
+      - type: volume
+        source: prysm-beacon2-data
+        target: /data
+    networks:
+      - almena-network
+
+  validator1:
+    image: gcr.io/offchainlabs/prysm/validator:stable
+    container_name: validator1
+    hostname: validator1
+    profiles:
+      - validator1
+      - prysm
+    command: >
+      --datadir=/data
+      --beacon-rpc-provider=beacon1:4000
+      --accept-terms-of-use
+      --wallet-password-file=/data/password.txt
+      --wallet-dir=/data/wallet
+    volumes:
+      - type: volume
+        source: prysm-validator1-data
+        target: /data
     networks:
       - almena-network
 

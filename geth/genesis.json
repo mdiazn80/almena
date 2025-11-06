@@ -1,6 +1,6 @@
 {
   "config": {
-    "chainId": 2025,
+    "chainId": 12345,
     "homesteadBlock": 0,
     "eip150Block": 0,
     "eip155Block": 0,
@@ -10,7 +10,10 @@
     "petersburgBlock": 0,
     "istanbulBlock": 0,
     "berlinBlock": 0,
-    "londonBlock": 0
+    "londonBlock": 0,
+    "mergeNetsplitBlock": 0,
+    "terminalTotalDifficulty": 0,
+    "ethash": {}
   },
   "alloc": {},
   "coinbase": "0x0000000000000000000000000000000000000000",
